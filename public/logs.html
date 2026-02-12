@@ -1,38 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Activity Logs</title>
+    <meta charset="UTF-8"><title>Logs</title>
     <style>
-        body { font-family: 'Courier New', monospace; padding: 20px; background: #121212; color: #e0e0e0; }
-        .log-entry { margin-bottom: 8px; padding: 10px; border-left: 4px solid #444; background: #1e1e1e; }
-        .time { color: #888; font-size: 0.85em; }
-        .tag { font-weight: bold; margin-right: 10px; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
-        .tag-UPLOAD { background: #28a745; color: white; }
-        .tag-MODIFY { background: #ffc107; color: black; }
-        .tag-DELETE { background: #dc3545; color: white; }
-        a { color: #007bff; text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        body { font-family: monospace; background: #121212; color: #0f0; padding: 20px; }
+        .log { border-bottom: 1px solid #333; padding: 10px; }
+        .type-DELETE { color: #f44; } .type-UPLOAD { color: #4f4; } .type-MODIFY { color: #ff0; }
+        a { color: #fff; text-decoration: none; border: 1px solid #fff; padding: 5px; }
     </style>
 </head>
 <body>
-    <a href="/"><- Back to Management</a>
-    <h2>System Activity Logs</h2>
-    <div id="logContainer">Loading logs...</div>
-
+    <a href="/">Back</a>
+    <h2>Activity Logs</h2>
+    <div id="logBox"></div>
     <script>
-        async function loadLogs() {
+        async function getLogs() {
             const res = await fetch('/api/logs');
-            const logs = await res.json();
-            document.getElementById('logContainer').innerHTML = logs.map(log => `
-                <div class="log-entry">
-                    <span class="tag tag-${log.type}">${log.type}</span>
-                    <span class="time">${log.timestamp}</span>
-                    <div style="margin-top:5px;">${log.message}</div>
-                </div>
-            `).join('');
+            const data = await res.json();
+            document.getElementById('logBox').innerHTML = data.map(l => `
+                <div class="log">
+                    <span style="color:#888">[${l.timestamp}]</span> 
+                    <b class="type-${l.type}">${l.type}</b>: ${l.message}
+                </div>`).join('');
         }
-        loadLogs();
-        setInterval(loadLogs, 3000);
+        getLogs(); setInterval(getLogs, 5000);
     </script>
 </body>
 </html>
