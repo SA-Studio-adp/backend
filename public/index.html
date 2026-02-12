@@ -33,7 +33,7 @@
     </div>
 
     <div class="card">
-        <h3 id="formTitle">Add Movie (Auto-Top)</h3>
+        <h3 id="formTitle">Add Movie</h3>
         <form id="movieForm">
             <input type="number" id="tmdb_id" placeholder="Enter TMDB ID" required>
             <small id="slug-status">Slug generates as you type...</small>
@@ -42,14 +42,13 @@
             <input type="url" id="dl_480" placeholder="480p Link" required>
             <input type="url" id="dl_720" placeholder="720p Link" required>
             <input type="url" id="dl_1080" placeholder="1080p Link" required>
-            <button type="submit" id="submitBtn">Save Movie to Top</button>
+            <button type="submit" id="submitBtn">Save Movie</button>
             <button type="button" id="cancelBtn" style="display:none; background:#6c757d;">Cancel</button>
         </form>
     </div>
 
     <div class="card">
         <table>
-            <thead><tr><th>Slug</th><th>TMDB</th><th>Actions</th></tr></thead>
             <tbody id="movieList"></tbody>
         </table>
     </div>
@@ -66,7 +65,7 @@
             if (id.length > 2) {
                 document.getElementById('slug-status').innerText = "Fetching...";
                 slugTimeout = setTimeout(async () => {
-                    const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=15d2ea6d0dc1d476cc865b1539df4d62`);
+                    const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=d67317159cbc25bdad2a79e81f06265d`);
                     if (res.ok) {
                         const data = await res.json();
                         document.getElementById('movie_id').value = data.title.toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-');
