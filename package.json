@@ -1,13 +1,22 @@
 {
-  "name": "scfiles-backend",
+  "name": "sc-files-backend",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Production backend for movie management and logging",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
