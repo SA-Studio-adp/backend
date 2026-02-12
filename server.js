@@ -14,6 +14,7 @@ app.use(express.static('public'));
 const MOVIES_FILE = path.join(__dirname, 'movies.json');
 const LOGS_FILE = path.join(__dirname, 'logs.json');
 
+// Initialize files
 if (!fs.existsSync(MOVIES_FILE)) fs.writeFileSync(MOVIES_FILE, JSON.stringify([]));
 if (!fs.existsSync(LOGS_FILE)) fs.writeFileSync(LOGS_FILE, JSON.stringify([]));
 
@@ -22,27 +23,23 @@ const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, nu
 
 const addLog = (type, message) => {
     const logs = readJSON(LOGS_FILE);
-    logs.unshift({ 
-        timestamp: new Date().toLocaleString(), 
-        type: type,
-        message: message 
-    });
+    logs.unshift({ timestamp: new Date().toLocaleString(), type, message });
     writeJSON(LOGS_FILE, logs.slice(0, 100));
 };
 
-// API: Get Movies
+// GET Movies
 app.get('/api/movies', (req, res) => res.json(readJSON(MOVIES_FILE)));
 
-// API: Add Movie
+// ADD Movie (Always to Top)
 app.post('/api/movies', (req, res) => {
     const movies = readJSON(MOVIES_FILE);
-    movies.unshift(req.body);
+    movies.unshift(req.body); // Forcefully adds to index 0
     writeJSON(MOVIES_FILE, movies);
-    addLog('UPLOAD', `Added: ${req.body.id}`);
+    addLog('UPLOAD', `Added to Top: ${req.body.id}`);
     res.status(201).json({ success: true });
 });
 
-// API: Update Movie
+// UPDATE Movie
 app.put('/api/movies/:id', (req, res) => {
     let movies = readJSON(MOVIES_FILE);
     const index = movies.findIndex(m => m.id === req.params.id);
@@ -55,17 +52,13 @@ app.put('/api/movies/:id', (req, res) => {
     res.status(404).json({ error: "Not found" });
 });
 
-// API: Delete Movie
+// DELETE Movie
 app.delete('/api/movies/:id', (req, res) => {
     let movies = readJSON(MOVIES_FILE);
-    const initialLength = movies.length;
     movies = movies.filter(m => m.id !== req.params.id);
-    if (movies.length < initialLength) {
-        writeJSON(MOVIES_FILE, movies);
-        addLog('DELETE', `Removed: ${req.params.id}`);
-        return res.json({ success: true });
-    }
-    res.status(404).json({ error: "Not found" });
+    writeJSON(MOVIES_FILE, movies);
+    addLog('DELETE', `Removed: ${req.params.id}`);
+    res.json({ success: true });
 });
 
 app.get('/api/logs', (req, res) => res.json(readJSON(LOGS_FILE)));
