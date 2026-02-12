@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Activity Logs</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #222; color: #0f0; }
+        .log-entry { margin-bottom: 10px; border-bottom: 1px solid #333; padding: 5px; }
+        .time { color: #888; margin-right: 15px; }
+        a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <a href="/"><- Back to Admin</a>
+    <h2>System Logs</h2>
+    <div id="logContainer">Loading logs...</div>
+
+    <script>
+        async function loadLogs() {
+            const res = await fetch('/api/logs');
+            const logs = await res.json();
+            document.getElementById('logContainer').innerHTML = logs.map(log => `
+                <div class="log-entry">
+                    <span class="time">[${log.timestamp}]</span>
+                    <span>${log.message}</span>
+                </div>
+            `).join('');
+        }
+        loadLogs();
+        setInterval(loadLogs, 5000); // Refresh every 5 seconds
+    </script>
+</body>
+</html>
