@@ -6,46 +6,24 @@
     <title>Admin Panel</title>
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
-        
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 900px; margin: 0 auto; padding: 15px; background: #f4f7f6; color: #333; }
-        
-        /* Mobile Optimization */
+        body { font-family: -apple-system, system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 15px; background: #f4f7f6; color: #333; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        h2, h3 { margin-top: 0; }
-        
-        input, select, button { 
-            width: 100%; padding: 12px; margin: 8px 0; 
-            box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; 
-        }
-        
-        button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
-        button:hover { opacity: 0.9; }
-        
-        .btn-delete { background: var(--danger); }
-        .btn-edit { background: var(--warning); color: black; }
-        
-        /* Navigation & Header */
-        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .nav a { text-decoration: none; color: var(--primary); font-weight: bold; padding: 8px 16px; border: 1px solid var(--primary); border-radius: 8px; }
-
-        /* Responsive Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 12px; background: #f8f9fa; border-bottom: 2px solid #dee2e6; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
+        .btn-delete { background: var(--danger); width: auto; }
+        .btn-edit { background: var(--warning); color: black; width: auto; }
+        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav a { text-decoration: none; color: var(--primary); font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        #slug-status { font-size: 12px; color: #666; }
 
         @media (max-width: 600px) {
             table, thead, tbody, th, td, tr { display: block; }
-            thead tr { position: absolute; top: -9999px; left: -9999px; }
-            tr { border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; padding: 10px; }
-            td { border: none; position: relative; padding-left: 50%; text-align: right; }
-            td:before { content: attr(data-label); position: absolute; left: 10px; width: 45%; padding-right: 10px; white-space: nowrap; text-align: left; font-weight: bold; color: #666; }
-            .action-btns { display: flex; gap: 5px; justify-content: flex-end; }
-            .btn-edit, .btn-delete { width: auto; margin: 0; }
+            tr { border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; padding: 10px; }
+            td { border: none; text-align: right; padding-left: 50%; position: relative; }
+            td:before { content: attr(data-label); position: absolute; left: 10px; font-weight: bold; }
         }
-
-        /* Loading indicator for slug */
-        #slug-status { font-size: 12px; color: #666; margin-top: -5px; display: block; }
     </style>
 </head>
 <body>
@@ -55,91 +33,61 @@
     </div>
 
     <div class="card">
-        <h3 id="formTitle">Add Movie</h3>
+        <h3 id="formTitle">Add Movie (Auto-Top)</h3>
         <form id="movieForm">
             <input type="number" id="tmdb_id" placeholder="Enter TMDB ID" required>
-            <small id="slug-status">Slug will generate automatically...</small>
-            
+            <small id="slug-status">Slug generates as you type...</small>
             <input type="text" id="movie_id" placeholder="Movie ID (Slug)" required>
-            
             <input type="text" id="extras" placeholder="Extras (e.g. Tamil Audio)">
-            
-            <select id="pos">
-                <option value="">Standard Position</option>
-                <option value="top">Top Pick</option>
-            </select>
-            
             <input type="url" id="dl_480" placeholder="480p Link" required>
             <input type="url" id="dl_720" placeholder="720p Link" required>
             <input type="url" id="dl_1080" placeholder="1080p Link" required>
-            
-            <button type="submit" id="submitBtn">Save Movie</button>
-            <button type="button" id="cancelBtn" style="display:none; background:#6c757d;">Cancel Edit</button>
+            <button type="submit" id="submitBtn">Save Movie to Top</button>
+            <button type="button" id="cancelBtn" style="display:none; background:#6c757d;">Cancel</button>
         </form>
     </div>
 
-    <div class="card" style="padding: 10px;">
-        <h3 style="padding: 10px;">Current Library</h3>
-        <table id="movieTable">
-            <thead>
-                <tr>
-                    <th>Slug</th>
-                    <th>TMDB</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
+    <div class="card">
+        <table>
+            <thead><tr><th>Slug</th><th>TMDB</th><th>Actions</th></tr></thead>
+            <tbody id="movieList"></tbody>
         </table>
     </div>
 
     <script>
         let isEditing = false;
-        let timeout = null;
+        let slugTimeout = null;
 
-        // Auto-slug Logic
-        document.getElementById('tmdb_id').addEventListener('input', function(e) {
-            if (isEditing) return; // Don't overwrite slug when editing
-            
-            clearTimeout(timeout);
-            const tmdbId = e.target.value;
-            const status = document.getElementById('slug-status');
-            
-            if (tmdbId.length > 2) {
-                status.innerText = "Fetching title...";
-                timeout = setTimeout(() => fetchAndSetSlug(tmdbId), 800);
+        // Auto-Slug logic
+        document.getElementById('tmdb_id').addEventListener('input', (e) => {
+            if (isEditing) return;
+            clearTimeout(slugTimeout);
+            const id = e.target.value;
+            if (id.length > 2) {
+                document.getElementById('slug-status').innerText = "Fetching...";
+                slugTimeout = setTimeout(async () => {
+                    const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=15d2ea6d0dc1d476cc865b1539df4d62`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        document.getElementById('movie_id').value = data.title.toLowerCase().replace(/[^\w ]+/g,'').replace(/ +/g,'-');
+                        document.getElementById('slug-status').innerText = "✅ Fetched: " + data.title;
+                    }
+                }, 800);
             }
         });
-
-        async function fetchAndSetSlug(id) {
-            try {
-                const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=15d2ea6d0dc1d476cc865b1539df4d62`);
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                const slug = data.title.toLowerCase().trim()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/[\s_-]+/g, '-')
-                    .replace(/^-+|-+$/g, '');
-                document.getElementById('movie_id').value = slug;
-                document.getElementById('slug-status').innerText = "✅ Slug generated from: " + data.title;
-            } catch (err) {
-                document.getElementById('slug-status').innerText = "❌ Could not auto-fetch. Enter manually.";
-            }
-        }
 
         async function loadMovies() {
             const res = await fetch('/api/movies');
             const movies = await res.json();
-            const tbody = document.querySelector('#movieTable tbody');
-            tbody.innerHTML = movies.map(m => `
+            document.getElementById('movieList').innerHTML = movies.map(m => `
                 <tr>
                     <td data-label="Slug">${m.id}</td>
                     <td data-label="TMDB">${m.tmdb_id}</td>
-                    <td data-label="Actions" class="action-btns">
+                    <td data-label="Actions">
                         <button class="btn-edit" onclick="editMovie('${m.id}')">Edit</button>
-                        <button class="btn-delete" onclick="deleteMovie('${m.id}')">Delete</button>
+                        <button class="btn-delete" onclick="deleteMovie('${m.id}')">Del</button>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
         }
 
         document.getElementById('movieForm').onsubmit = async (e) => {
@@ -149,67 +97,49 @@
                 id: id,
                 tmdb_id: parseInt(document.getElementById('tmdb_id').value),
                 extras: document.getElementById('extras').value,
-                pos: document.getElementById('pos').value || undefined,
                 downloads: {
                     480: document.getElementById('dl_480').value,
                     720: document.getElementById('dl_720').value,
                     1080: document.getElementById('dl_1080').value
                 }
             };
-
-            const url = isEditing ? `/api/movies/${id}` : '/api/movies';
-            const method = isEditing ? 'PUT' : 'POST';
-
-            await fetch(url, {
-                method: method,
+            await fetch(isEditing ? `/api/movies/${id}` : '/api/movies', {
+                method: isEditing ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-
-            resetForm();
-            loadMovies();
+            resetForm(); loadMovies();
         };
 
         async function editMovie(id) {
             const res = await fetch('/api/movies');
             const movies = await res.json();
-            const movie = movies.find(m => m.id === id);
-            
-            if (movie) {
-                isEditing = true;
-                document.getElementById('formTitle').innerText = "Editing: " + id;
-                document.getElementById('movie_id').value = movie.id;
-                document.getElementById('movie_id').readOnly = true;
-                document.getElementById('tmdb_id').value = movie.tmdb_id;
-                document.getElementById('extras').value = movie.extras || "";
-                document.getElementById('pos').value = movie.pos || "";
-                document.getElementById('dl_480').value = movie.downloads[480];
-                document.getElementById('dl_720').value = movie.downloads[720];
-                document.getElementById('dl_1080').value = movie.downloads[1080];
-                document.getElementById('cancelBtn').style.display = "block";
-                document.getElementById('slug-status').innerText = "Auto-slug disabled during edit.";
-                window.scrollTo({top: 0, behavior: 'smooth'});
-            }
+            const m = movies.find(x => x.id === id);
+            isEditing = true;
+            document.getElementById('movie_id').value = m.id;
+            document.getElementById('tmdb_id').value = m.tmdb_id;
+            document.getElementById('extras').value = m.extras || "";
+            document.getElementById('dl_480').value = m.downloads[480];
+            document.getElementById('dl_720').value = m.downloads[720];
+            document.getElementById('dl_1080').value = m.downloads[1080];
+            document.getElementById('cancelBtn').style.display = "block";
+            window.scrollTo(0,0);
         }
 
         async function deleteMovie(id) {
-            if (confirm(`Are you sure you want to delete ${id}?`)) {
-                await fetch(`/api/movies/${id}`, { method: 'DELETE' });
-                loadMovies();
-            }
+            if(confirm('Delete?')) { await fetch(`/api/movies/${id}`, {method:'DELETE'}); loadMovies(); }
         }
 
         function resetForm() {
             isEditing = false;
             document.getElementById('movieForm').reset();
-            document.getElementById('movie_id').readOnly = false;
-            document.getElementById('formTitle').innerText = "Add Movie";
             document.getElementById('cancelBtn').style.display = "none";
-            document.getElementById('slug-status').innerText = "Slug will generate automatically...";
         }
 
-        document.getElementById('cancelBtn').onclick = resetForm;
+        // Keep Alive Ping (Every 10 mins for Render)
+        setInterval(() => fetch('/api/movies'), 600000);
+
         loadMovies();
     </script>
 </body>
-</html>
+    </html>
