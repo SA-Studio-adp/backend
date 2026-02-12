@@ -4,15 +4,19 @@
     <meta charset="UTF-8">
     <title>Activity Logs</title>
     <style>
-        body { font-family: monospace; padding: 20px; background: #222; color: #0f0; }
-        .log-entry { margin-bottom: 10px; border-bottom: 1px solid #333; padding: 5px; }
-        .time { color: #888; margin-right: 15px; }
-        a { color: #007bff; text-decoration: none; }
+        body { font-family: 'Courier New', monospace; padding: 20px; background: #121212; color: #e0e0e0; }
+        .log-entry { margin-bottom: 8px; padding: 10px; border-left: 4px solid #444; background: #1e1e1e; }
+        .time { color: #888; font-size: 0.85em; }
+        .tag { font-weight: bold; margin-right: 10px; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .tag-UPLOAD { background: #28a745; color: white; }
+        .tag-MODIFY { background: #ffc107; color: black; }
+        .tag-DELETE { background: #dc3545; color: white; }
+        a { color: #007bff; text-decoration: none; display: inline-block; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <a href="/"><- Back to Admin</a>
-    <h2>System Logs</h2>
+    <a href="/"><- Back to Management</a>
+    <h2>System Activity Logs</h2>
     <div id="logContainer">Loading logs...</div>
 
     <script>
@@ -21,13 +25,14 @@
             const logs = await res.json();
             document.getElementById('logContainer').innerHTML = logs.map(log => `
                 <div class="log-entry">
-                    <span class="time">[${log.timestamp}]</span>
-                    <span>${log.message}</span>
+                    <span class="tag tag-${log.type}">${log.type}</span>
+                    <span class="time">${log.timestamp}</span>
+                    <div style="margin-top:5px;">${log.message}</div>
                 </div>
             `).join('');
         }
         loadLogs();
-        setInterval(loadLogs, 5000); // Refresh every 5 seconds
+        setInterval(loadLogs, 3000);
     </script>
 </body>
 </html>
