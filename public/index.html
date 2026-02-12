@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Add Movie</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f4f4f4; }
+        form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        .nav { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="/logs.html">View Activity Logs</a></div>
+    <h2>Add New Movie</h2>
+    <form id="movieForm">
+        <input type="text" id="movie_id" placeholder="Movie ID (e.g., mana-shankaravaraprasad-garu)" required>
+        <input type="number" id="tmdb_id" placeholder="TMDB ID" required>
+        <input type="text" id="extras" placeholder="Extras (e.g., Tamil Audio)">
+        <select id="pos">
+            <option value="">Standard Position</option>
+            <option value="top">Top Pick</option>
+        </select>
+        <h4>Download Links</h4>
+        <input type="url" id="dl_480" placeholder="480p Link" required>
+        <input type="url" id="dl_720" placeholder="720p Link" required>
+        <input type="url" id="dl_1080" placeholder="1080p Link" required>
+        <button type="submit">Add Movie</button>
+    </form>
+
+    <script>
+        document.getElementById('movieForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                id: document.getElementById('movie_id').value,
+                tmdb_id: parseInt(document.getElementById('tmdb_id').value),
+                extras: document.getElementById('extras').value,
+                pos: document.getElementById('pos').value || undefined,
+                downloads: {
+                    480: document.getElementById('dl_480').value,
+                    720: document.getElementById('dl_720').value,
+                    1080: document.getElementById('dl_1080').value
+                }
+            };
+
+            const res = await fetch('/api/movies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) { alert('Movie Added!'); e.target.reset(); }
+        };
+    </script>
+</body>
+</html>
